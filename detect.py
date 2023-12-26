@@ -3,8 +3,8 @@ import torch
 import time
 import numpy as np
 
-yolo_path = r''
-model_path = r''
+yolo_path = r'D:\repository\yolov5'
+model_path = r'robot5s.pt'
 
 # Load the YOLOv5 model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
