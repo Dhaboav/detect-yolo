@@ -5,7 +5,7 @@ from vision.depth_location import DepthLocation as Depth
 
 class Detect:
     def __init__(self, yolo_path, model_path, index, width, height):
-        # Yolo env
+        # YOLO environment
         self.yolo_path = yolo_path
         self.model_path = model_path
 
@@ -13,7 +13,7 @@ class Detect:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = torch.hub.load(self.yolo_path, 'custom', path=self.model_path, source="local").to(self.device)
 
-        # Camera setting
+        # Camera settings
         self.camera = cv.VideoCapture(index)
         self.camera_size = (width, height)
         self.camera.set(cv.CAP_PROP_FRAME_HEIGHT, self.camera_size[0])
@@ -21,6 +21,13 @@ class Detect:
 
         # Other
         self.depth = Depth()
+
+        # Constants (in centimeters)
+        self.bola_width = 21
+        self.gawang_width = 280
+        self.penghalang_width = 52
+        self.robot_width = 52
+        self.real_distance = 90
 
     def apply_roi(self, frame, x, y, radius):
         circle_mask = np.zeros_like(frame)
@@ -60,24 +67,22 @@ class Detect:
                 id_class, x1, y1, x2, y2 = info["class"], int(info['xmin']), int(info['ymin']), int(info['xmax']), int(info['ymax'])
                 class_name = self.model.names[id_class]
 
-                # centeroid
+                # centroid
                 mid_x, mid_y = (x1 + x2) // 2, (y1 + y2) // 2
                 color = color_mapping.get(class_name, (0, 0, 0))  # Default to black if class_name is not found
 
                 cv.rectangle(output, (x1, y1), (x2, y2), color, 2)
                 cv.circle(output, (mid_x, mid_y), 2, color, -1)
 
-                a = self.depth.quadrant(mid_x, mid_y, x_center, y_center)
-                print(a) if class_name in color_mapping else None
-                
+                if class_name == "BOLA":
+                    self.depth.process_object(frame, x_center, y_center, x1, y1, x2, y2, 111, mid_x, mid_y, self.bola_width, color, output)
+
             cv.imshow("Depth Estimation", output)
             if cv.waitKey(1) & 0xFF == ord("x"):
                 break
 
         self.camera.release()
         cv.destroyAllWindows()
-
-
 
 # Given paths
 yolo_path = r'D:\repository\yolov5'

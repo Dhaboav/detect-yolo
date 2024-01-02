@@ -24,3 +24,19 @@ class DepthLocation:
             return 3
         elif (x_object > x_center) and (y_object > y_center):
             return 4
+        
+    def process_object(self, frame, x_center, y_center, x1, y1, x2, y2, focal_length, mid_x, mid_y, width_attribute, color, output):
+        # Calculate width in pixels
+        width_pixels = int((x2 - x1) * frame.shape[1]) if 0 <= x1 <= 1 and 0 <= x2 <= 1 else int(x2 - x1)
+        
+        # Store or use the width for the class
+        distance_est = self.depth_estimation(focal_length, width_attribute, width_pixels)
+        quadrant = self.quadrant(mid_x, mid_y, x_center, y_center)
+
+        # Draw rectangle and circle
+        cv.rectangle(output, (x1, y1), (x2, y2), color, 2)
+        cv.circle(output, (mid_x, mid_y), 2, color, -1)
+
+        # Draw text
+        cv.putText(output, f'{int(distance_est)} cm', (x2, y1 - 10), cv.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
+        cv.putText(output, f'{quadrant}', (x1, y1 - 10), cv.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
